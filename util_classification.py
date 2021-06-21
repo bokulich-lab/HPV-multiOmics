@@ -32,14 +32,26 @@ class Capturing(list):
         sys.stdout = self._stdout
 
 
-def plot_importance_top50_features(df_top_features, taxa,
-                                   str_target, output_dir):
+def plot_importance_topx_features(top_x, df_top, taxa,
+                                  str_target, output_dir):
     """
-    Plot importance of top 50 features and save plot in `output_dir`
+    Plot importance of `top_x` features in `df_top`
+    and save plot in `output_dir`
     """
+    plt.style.use('seaborn-whitegrid')
+    # set colors for all features
+    df_top['color'] = 'orange'  # would be pcov if in top features
+    df_top.loc[df_top.index.str.startswith(
+        'F_micro_'), 'color'] = '#800680'  # purple
+    df_top.loc[df_top.index.str.startswith('F_proteo_'),
+               'color'] = '#E31A1B'  # red
+    df_top.loc[df_top.index.str.startswith(
+        'F_metabo_lipid_'), 'color'] = '#6BC8FB'  # lightblue
+    df_top.loc[df_top.index.str.startswith(
+        'F_metabo_other_'), 'color'] = '#1F77B4'  # darker blue
+
     # rename all features - dropping prefixes
-    df_top = df_top_features.copy(deep=True)
-    for prefix in ['F_micro_', 'F_metabo_',
+    for prefix in ['F_micro_', 'F_metabo_lipid_', 'F_metabo_other_',
                    'F_proteo_', 'F_pcov_']:
         df_top.index = [i.replace(prefix, '')
                         for i in df_top.index]
@@ -47,20 +59,31 @@ def plot_importance_top50_features(df_top_features, taxa,
     df_top.index = [i[:6] + ' : ' + taxa.loc[i] +
                     '*' if i in taxa.index else i for i in
                     df_top.index]
-    # plot
-    plt_imp = df_top[:50].sort_values('importance',
-                                      ascending=True).plot(
-        kind='barh', legend=False, figsize=(3, 9))
 
+    # ensure df_top is ordered correctly and select top_x
+    df_topx = df_top.sort_values('importance',
+                                 ascending=False)[:top_x]
+
+    # plot
+    fig, ax = plt.subplots(figsize=(5, 8))
+    ax.barh(range(top_x - 1, -1, -1),
+            df_topx.importance,
+            color=df_topx['color'])
+    ax.set_ylim(-0.6, top_x - 0.4)
+    ls_var_names = df_topx.index.tolist()
+    plt.yticks(range(len(ls_var_names)), list(
+        reversed(ls_var_names)), fontsize=9)
+    plt.grid(True)
     # color labels if microbial
-    for ytick in plt_imp.get_yticklabels():
+    for ytick in ax.get_yticklabels():
         if '*' in ytick.get_text():
             ytick.set_color('r')
 
-    plt_imp.get_figure().savefig(os.path.join(output_dir,
-                                              str_target +
-                                              '-feature-importance.pdf'),
-                                 bbox_inches="tight")
+    ax.set_xlabel('Mean Gini feature importance', fontsize=9)
+    ax.get_figure().savefig(os.path.join(output_dir,
+                                         str_target +
+                                         '-feature-importance.pdf'),
+                            bbox_inches="tight")
 
 
 def plot_abundances_top40_features(df_data_orig, df_top_features,
@@ -75,7 +98,7 @@ def plot_abundances_top40_features(df_data_orig, df_top_features,
     # remove all prefixed
     df_data = df_data_orig.copy(deep=True)
     df_top = df_top_features.copy(deep=True)
-    for prefix in ['F_micro_', 'F_metabo_',
+    for prefix in ['F_micro_', 'F_metabo_lipid_', 'F_metabo_other_',
                    'F_proteo_', 'F_pcov_']:
         df_data.columns = [i.replace(prefix, '')
                            for i in df_data.columns]
@@ -335,10 +358,11 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
                                               bbox_inches='tight')
     # Top features
     # df_top_features = res_combined.feature_importance.view(pd.DataFrame)
-    plot_importance_top50_features(
-        res_combined.feature_importance.view(pd.DataFrame),
-        taxa,
-        target2predict, output_dir)
+    plot_importance_topx_features(25,
+                                  res_combined.feature_importance.view(
+                                      pd.DataFrame),
+                                  taxa,
+                                  target2predict, output_dir)
     plt.show()
 
     # ! Evaluating separate-omics

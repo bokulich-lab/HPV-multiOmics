@@ -131,7 +131,8 @@ def add_microbiome_data(df_all,
 def add_metabolome_data(
         df_all,
         path2data,
-        source_metabolome='CC_metabolome_scaledPeaks_correctIDs.qza'):
+        source_metabolome='CC_metabolome_scaledPeaks_correctIDs.qza',
+        source_metab_md='metabolite_metadata_CC.txt'):
     """
     Function reading metabolome data from path2data, processing features and
     tagging them with prefix `F_metabo` and left joining with df_all.
@@ -149,9 +150,16 @@ def add_metabolome_data(
                                                                 'NTC'])].copy(
         deep=True)
 
+    # read metabolites metadata to find out which are lipids and which are not
+    df_metadata = qiime2.Metadata.load(
+        os.path.join(path2data, source_metab_md)).to_dataframe()
+    ls_lipids = df_metadata[df_metadata['SUPER PATHWAY']
+                            == 'Lipid'].index.tolist()
+
     # add prefix identifying metabolome features: F_metabo_
-    df_metabolites.columns = ['F_metabo_' +
-                              x for x
+    df_metabolites.columns = ['F_metabo_lipid_'+x if x in ls_lipids
+                              else 'F_metabo_other_'+x
+                              for x
                               in df_metabolites.columns]
     df_metabolites.index.name = 'sample-id'
 

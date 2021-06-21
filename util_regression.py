@@ -22,17 +22,17 @@ def train_regressors(df_data4regr, ls_targets, ls_features,
     # target preparation: read
     df_data = df_data4regr.copy(deep=True)
 
+    # transform all prefixes in features
     if str_target_descr.startswith('metabolites'):
-        prefix = 'F_metabo_'
+        df_data.columns = [x.replace('F_metabo_lipid_', '')
+                           for x in df_data.columns]
+        df_data.columns = [x.replace('F_metabo_other_', '')
+                           for x in df_data.columns]
     elif str_target_descr.startswith('biomarkers'):
-        # todo check
-        prefix = 'F_proteo_'
-    else:
-        prefix = ''
+        df_data.columns = [x.replace('F_proteo_', '')
+                           for x in df_data.columns]
 
     # transform all prefixes in features
-    df_data.columns = [x.replace(prefix, '')
-                       for x in df_data.columns]
     df_targets = df_data[ls_targets]
 
     # transform target
@@ -91,7 +91,7 @@ def get_regr_accuracy_results(str_target_descr, ls_targets,
         res = _linear_regress(exp, acc)
         res['Target'] = t
         accuracy_results = pd.concat([accuracy_results, res], axis=0)
-        fig = _regplot_from_dataframe(exp, acc)
+        _regplot_from_dataframe(exp, acc)
 
     accuracy_results = accuracy_results[cols].groupby(
         ['Target']).mean().sort_values('r-squared', ascending=False)
@@ -173,7 +173,8 @@ def plot_regr_top15_features(accuracy_results, rf_results, taxa,
         # remove prefix in index
         imp.index = [x.replace('F_micro_', '') for x in imp.index]
         imp.index = [x.replace('F_proteo_', '') for x in imp.index]
-        imp.index = [x.replace('F_metabo_', '') for x in imp.index]
+        imp.index = [x.replace('F_metabo_lipid_', '') for x in imp.index]
+        imp.index = [x.replace('F_metabo_other_', '') for x in imp.index]
 
         imp.index = [i[:6] + ' : ' + taxa.loc[i] +
                      '*' if i in taxa.index else i for i in imp.index]
@@ -222,7 +223,7 @@ def train_n_eval_regressors(ls_targets, str_target_desc, transform_target2log,
         target = ls_targets[0]
         acc = pd.to_numeric(rf_res[target].predictions.view(pd.Series))
         acc, exp = acc.align(md_targets.to_series(), join='inner', axis=0)
-        res = _linear_regress(exp, acc)
+        _linear_regress(exp, acc)
         fig = _mod_regplot_from_dataframe(exp, acc)
         if target == 'T_infl_score_flt':
             label_addon = 'Inflammation Score'
