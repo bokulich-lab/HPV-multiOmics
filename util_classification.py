@@ -13,7 +13,6 @@ import matplotlib as mpl
 import qiime2
 from qiime2.plugins import sample_classifier as sc
 from q2_sample_classifier.visuals import (
-    _plot_confusion_matrix,
     _add_sample_size_to_xtick_labels, _custom_palettes)
 
 
