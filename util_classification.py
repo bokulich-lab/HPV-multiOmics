@@ -3,14 +3,18 @@ import os
 import re
 from io import StringIO
 import pandas as pd
+import numpy as np
 import math
-from sklearn.metrics import roc_auc_score, average_precision_score
+from sklearn.metrics import (
+    roc_auc_score, average_precision_score, confusion_matrix)
 from matplotlib.pylab import plt
 import seaborn as sns
 import matplotlib as mpl
 import qiime2
 from qiime2.plugins import sample_classifier as sc
-from q2_sample_classifier.visuals import _plot_confusion_matrix
+from q2_sample_classifier.visuals import (
+    _plot_confusion_matrix,
+    _add_sample_size_to_xtick_labels, _custom_palettes)
 
 
 class Capturing(list):
@@ -292,6 +296,36 @@ def plot_metric_omics(df_omics_metrics, sample_count, str_target, str_metric):
     return fig
 
 
+def _plot_adjusted_heatmap_from_confusion_matrix(cm, palette,
+                                                 vmin=None, vmax=None):
+    """
+    Function adjusted from q2_sample_classifier.visuals to suit
+    viusal proportions needed for this study.
+    """
+    palette = _custom_palettes()[palette]
+    plt.figure()
+    scaler, labelsize, dpi, cbar_min = 10, 8, 100, .15
+    sns.set(rc={'xtick.labelsize': labelsize, 'ytick.labelsize': labelsize,
+            'figure.dpi': dpi})
+    fig, (ax, cax) = plt.subplots(ncols=2, constrained_layout=True)
+    heatmap = sns.heatmap(cm, vmin=vmin, vmax=vmax, cmap=palette, ax=ax,
+                          cbar_ax=cax, cbar_kws={'label': 'Proportion',
+                                                 'shrink': 0.7},
+                          square=True, xticklabels=True, yticklabels=True)
+    # Resize the plot dynamically based on number of classes
+    hm_pos = ax.get_position()
+    scale = len(cm) / scaler
+    # prevent cbar from getting unreadably small
+    cbar_height = max(cbar_min, scale)
+    ax.set_position([hm_pos.x0, hm_pos.y0, scale, scale])
+    cax.set_position([hm_pos.x0 + scale * .95, hm_pos.y0, scale / len(cm),
+                     cbar_height])
+    # Make the heatmap subplot (not the colorbar) the active axis object so
+    # labels apply correctly on return
+    plt.sca(ax)
+    return heatmap
+
+
 def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
                             ls_class_order, dic_color_palette,
                             seed, output_dir):
@@ -334,10 +368,10 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
     path2save = os.path.join(
         output_dir, '{}-accuracy.qzv'.format(target2predict))
     performance_qzv.save(path2save)
-    # print('Confusion matrix and ROC curve saved as Q2'
-    #       'artifact here: {}'.format(path2save))
-    print(performance_qzv)
-    # Confusion matrix separately
+    print('Confusion matrix and ROC curve saved as Q2'
+          'artifact here: {}'.format(path2save))
+
+    # Plot confusion matrix separately
     df_pred = res_combined.predictions.view(pd.Series)
     df_pred.sort_index(inplace=True)
 
@@ -346,16 +380,27 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
 
     # # df_true = pd.get_dummies(df_true)[ls_cols]
     ls_classes = df_true.unique().tolist()
-    accuracy_table, plt_confusion_matrix = _plot_confusion_matrix(
-        df_true,
-        df_pred,
-        classes=ls_classes,
-        normalize=True,
-        palette='sirocco')
+    cm = confusion_matrix(df_true, df_pred)
+    # normalize
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    plt_confusion_matrix = _plot_adjusted_heatmap_from_confusion_matrix(
+        cm,
+        'sirocco')
+    x_tick_labels = _add_sample_size_to_xtick_labels(df_pred, ls_classes)
+    y_tick_labels = _add_sample_size_to_xtick_labels(df_true, ls_classes)
+
+    plt.ylabel('True label')  # , fontsize=9)
+    plt.xlabel('Predicted label')  # , fontsize=9)
+    plt_confusion_matrix.set_xticklabels(
+        x_tick_labels, rotation=90, ha='center')
+    plt_confusion_matrix.set_yticklabels(y_tick_labels, rotation=0, ha='right')
+
     path2save = os.path.join(output_dir, '{}-confusion-matrix.pdf'.format(
         target2predict))
     plt_confusion_matrix.get_figure().savefig(path2save,
                                               bbox_inches='tight')
+
     # Top features
     # df_top_features = res_combined.feature_importance.view(pd.DataFrame)
     plot_importance_topx_features(25,
