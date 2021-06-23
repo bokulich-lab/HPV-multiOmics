@@ -79,3 +79,4 @@ scratch-data.py
 *-output/
 # data
 data-raw/*
+*.html
