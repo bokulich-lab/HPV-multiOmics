@@ -13,7 +13,8 @@ import matplotlib as mpl
 import qiime2
 from qiime2.plugins import sample_classifier as sc
 from q2_sample_classifier.visuals import (
-    _add_sample_size_to_xtick_labels, _custom_palettes)
+    _add_sample_size_to_xtick_labels, _custom_palettes,
+    _generate_roc_plots)
 
 
 class Capturing(list):
@@ -325,6 +326,31 @@ def _plot_adjusted_heatmap_from_confusion_matrix(cm, palette,
     return heatmap
 
 
+def plot_confusion_matrix(y_true, y_pred):
+    """
+    Function plotting confusion matrix
+    for y_true and y_pred
+    """
+    ls_classes = y_true.unique().tolist()
+    cm = confusion_matrix(y_true, y_pred)
+    # normalize
+    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+
+    plt_confusion = _plot_adjusted_heatmap_from_confusion_matrix(
+        cm,
+        'sirocco')
+    x_tick_labels = _add_sample_size_to_xtick_labels(y_pred, ls_classes)
+    y_tick_labels = _add_sample_size_to_xtick_labels(y_true, ls_classes)
+
+    plt.ylabel('True label')  # , fontsize=9)
+    plt.xlabel('Predicted label')  # , fontsize=9)
+    plt_confusion.set_xticklabels(
+        x_tick_labels, rotation=90, ha='center')
+    plt_confusion.set_yticklabels(y_tick_labels, rotation=0, ha='right')
+
+    return plt_confusion
+
+
 def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
                             ls_class_order, dic_color_palette,
                             seed, output_dir):
@@ -370,38 +396,33 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
     print('Confusion matrix and ROC curve saved as Q2'
           'artifact here: {}'.format(path2save))
 
-    # Plot confusion matrix separately
+    df_predprob = res_combined.probabilities.view(pd.DataFrame)
+    df_predprob.sort_index(inplace=True)
+
     df_pred = res_combined.predictions.view(pd.Series)
     df_pred.sort_index(inplace=True)
 
     df_true = df_data[target2predict].copy(deep=True)
     df_true.sort_index(inplace=True)
 
-    # # df_true = pd.get_dummies(df_true)[ls_cols]
-    ls_classes = df_true.unique().tolist()
-    cm = confusion_matrix(df_true, df_pred)
-    # normalize
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+    # Plot ROC curve separately
+    roc = _generate_roc_plots(df_true, df_predprob,
+                              palette='sirocco')
+    path4roc = os.path.join(output_dir, '{}-roc-plot.png'.format(
+        target2predict))
+    roc.savefig(path4roc,
+                bbox_inches='tight')
+    roc.savefig(path4roc.replace('.png', '.pdf'),
+                bbox_inches='tight')
 
-    plt_confusion_matrix = _plot_adjusted_heatmap_from_confusion_matrix(
-        cm,
-        'sirocco')
-    x_tick_labels = _add_sample_size_to_xtick_labels(df_pred, ls_classes)
-    y_tick_labels = _add_sample_size_to_xtick_labels(df_true, ls_classes)
-
-    plt.ylabel('True label')  # , fontsize=9)
-    plt.xlabel('Predicted label')  # , fontsize=9)
-    plt_confusion_matrix.set_xticklabels(
-        x_tick_labels, rotation=90, ha='center')
-    plt_confusion_matrix.set_yticklabels(y_tick_labels, rotation=0, ha='right')
-
+    # Plot confusion matrix separately
+    plt_confusion_matrix = plot_confusion_matrix(df_true, df_pred)
     path2save = os.path.join(output_dir, '{}-confusion-matrix.pdf'.format(
         target2predict))
     plt_confusion_matrix.get_figure().savefig(path2save,
                                               bbox_inches='tight')
 
     # Top features
-    # df_top_features = res_combined.feature_importance.view(pd.DataFrame)
     plot_importance_topx_features(25,
                                   res_combined.feature_importance.view(
                                       pd.DataFrame),
