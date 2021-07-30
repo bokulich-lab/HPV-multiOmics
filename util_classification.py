@@ -291,7 +291,10 @@ def plot_metric_omics(df_omics_metrics, sample_count, str_target, str_metric):
     ax.set_title(str_target)
     ax.set_ylabel(str_metric)
     ax.set_xlabel('N Data Sets')
-    ax.set_xticklabels(['', 1, '', '', '', '', 3])
+    if str_target == 'T_lactobacillus_dominance':
+        ax.set_xticklabels(['', 1, '', '', '', '', 2])
+    else:
+        ax.set_xticklabels(['', 1, '', '', '', '', 3])
 
     return fig
 
