@@ -13,6 +13,38 @@ plot_pca_scatters <- function(beta_div2_choose, df_pca_all,
   i <- 1
   ls_max_omics <- list(-1000, -1000, -1000) %>% set_names(ls_omics)
   ls_min_omics <- list(1000, 1000, 1000) %>% set_names(ls_omics)
+
+  # ensure correct order
+  df_pca_all <- df_pca_all %>%
+    mutate(
+      T_disease_state = factor(
+        T_disease_state,
+        levels = c("Ctrl_HPV_neg", "Ctrl_HPV_pos", "LGD", "HGD", "ICC"),
+        ordered = TRUE),
+      T_inflammation = factor(
+        T_inflammation,
+        levels = c("None", "Low", "High"),
+        ordered = TRUE),
+      T_lactobacillus_dominance = factor(
+        T_lactobacillus_dominance,
+        levels = c("NLD", "LD"),
+        ordered = TRUE),
+      T_pH = factor(
+        T_pH,
+        levels = c("Low", "High"),
+        ordered = TRUE)
+    )
+  palette_names <- c(
+    levels(df_pca_all$T_disease_state),
+    levels(df_pca_all$T_inflammation),
+    levels(df_pca_all$T_lactobacillus_dominance)
+  )
+  palette_cols <- c("#808080", "#00d0ff", "#3120f0", "purple", "red",
+    "#808080", "blue", "red",
+    "blue", "red"
+  )
+  names(palette_cols) <- palette_names
+
   # create omics plots
   for (target in ls_targets) {
     if (target == "T_lactobacillus_dominance") {
@@ -49,7 +81,8 @@ plot_pca_scatters <- function(beta_div2_choose, df_pca_all,
         } +
         ylab(paste0("PC2: ", round(vec_pca_values[2] * 100, 2), " %")) +
         theme_light() +
-        # scale_color_brewer(palette='Set2') +
+        theme(text = element_text(family = "sans")) +
+        scale_color_manual(values = palette_cols) +
         { if (i < 4) ggtitle(omics)
         } +
         # rename legend title to actual class name
