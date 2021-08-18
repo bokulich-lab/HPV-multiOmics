@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import (StandardScaler, FunctionTransformer)
 from sklearn.decomposition import PCA
+from statsmodels.multivariate.manova import MANOVA
 
 import matplotlib as mpl
 from matplotlib.pylab import plt
@@ -240,3 +241,32 @@ def merge_all_pca_metrics(df_pcoa_micro, beta_div2_choose,
     # print(df_pca_all.shape)
 
     return df_pca_all
+
+
+def run_manova(df_data, ls_dep_features, str_indep_feature):
+    """
+    Function running manova for given dependent (`ls_dep_features`)
+    and independent features (`str_indep_feature`) returning p-value of
+    Pillai\'s trace.
+    """
+    df_selected = df_data[ls_dep_features+[str_indep_feature]].copy(deep=True)
+
+    # clean up column names for R-type formula (only as a backup)
+    for item in [')', '(', '+', '-', '_', ',', ':', '/',
+                 ' ', ';', "'", "[", "]"]:
+        df_selected.columns = df_selected.columns.str.replace(item, '')
+        ls_dep_features = [x.replace(item, '') for x in ls_dep_features]
+        str_indep_feature = str_indep_feature.replace(item, '')
+
+    # create R-type formula
+    str_formula_dependent = '(' + ls_dep_features[0]
+    for meta in ls_dep_features[1:]:
+        str_formula_dependent += ' + ' + str(meta)
+    str_formula = str_formula_dependent + ')  ~ ' + str_indep_feature
+
+    maov = MANOVA.from_formula(str_formula, data=df_selected)
+
+    pvalue_pillai = maov.mv_test(
+    ).results['Intercept']['stat'].loc["Pillai\'s trace", "Pr > F"]
+
+    return pvalue_pillai
