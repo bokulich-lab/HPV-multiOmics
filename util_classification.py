@@ -90,14 +90,14 @@ def plot_importance_topx_features(top_x, df_top, taxa,
                             bbox_inches="tight")
 
 
-def plot_abundances_top40_features(df_data_orig, df_top_features,
+def plot_abundances_top25_features(df_data_orig, df_top_features,
                                    taxa,
                                    str_target, ls_class_order,
                                    dic_palette, output_dir):
     """
-    Plot abundances of top 40 most predictive features
+    Plot abundances of top 25 most predictive features
     """
-    fig, axes = plt.subplots(10, 4, figsize=(16, 20))
+    fig, axes = plt.subplots(5, 5, figsize=(16, 10))
 
     # remove all prefixed
     df_data = df_data_orig.copy(deep=True)
@@ -118,7 +118,7 @@ def plot_abundances_top40_features(df_data_orig, df_top_features,
                     df_top.index]
 
     # plot feature abundances
-    for ax1, feature in zip(axes.flatten(), df_top.index[:40]):
+    for ax1, feature in zip(axes.flatten(), df_top.index[:25]):
 
         sns.boxplot(x=feature, y=str_target,
                     data=df_data, showfliers=False, ax=ax1,
@@ -467,7 +467,7 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
 
     # ! Evaluating feature abundances
     print('\nEvaluating feature abundances for combined classifier...')
-    plot_abundances_top40_features(
+    plot_abundances_top25_features(
         df_data_orig=df_data,
         df_top_features=res_combined.feature_importance.view(pd.DataFrame),
         taxa=taxa,
