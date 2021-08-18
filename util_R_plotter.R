@@ -124,7 +124,7 @@ plot_pca_scatters <- function(beta_div2_choose, df_pca_all,
   grid_both <- plot_grid(grid_omics, grid_legends, ncol = 2,
                         byrow = TRUE, rel_widths = c(6, 1))
   ggsave(
-    file = file.path(output_dir, "omics-pca-ggplot.png"),
+    file = file.path(output_dir, "omics-pca-ggplot-log.png"),
     dpi = "retina", height = 10, width = 12
   )
 }

@@ -1,5 +1,6 @@
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+import numpy as np
+from sklearn.preprocessing import (StandardScaler, FunctionTransformer)
 from sklearn.decomposition import PCA
 
 import matplotlib as mpl
@@ -114,19 +115,27 @@ def return_pcoa_metrics_microbiome(dic_beta_result, dict_variance,
 
 def calc_pca_metrics_metabolome(dict_variance, df_data, ls_targets):
     """
-    Function performing PCA on scaled metabolome features
+    Function performing PCA on log-transformed and scaled metabolome features
     in `df_data` and returning dataframe with PCA metrics and targets
     saved.
     """
-    # get metabolies in df_data
+    # get metabolites in df_data
     ls_metabolome_cols = [x for x in df_data.columns
                           if x.startswith('F_metabo')]
-    # standardise metabolites
     df_metabolites = df_data[ls_metabolome_cols].copy(deep=True)
-    arr_metabolites_scaled = StandardScaler().fit_transform(df_metabolites)
+
+    # apply log transformation on metabolites
+    transformer = FunctionTransformer(np.log1p, validate=True)
+    arr_metabolites_log = transformer.transform(df_metabolites)
+
+    df_metabolites_log = pd.DataFrame(arr_metabolites_log,
+                                      columns=df_metabolites.columns,
+                                      index=df_metabolites.index)
+    # standardize metabolites
+    arr_metabolites_scaled = StandardScaler().fit_transform(df_metabolites_log)
     df_metabolites_scaled = pd.DataFrame(arr_metabolites_scaled,
-                                         columns=df_metabolites.columns,
-                                         index=df_metabolites.index)
+                                         columns=df_metabolites_log.columns,
+                                         index=df_metabolites_log.index)
 
     # perform PCA on scaled metabolites
     pca_2d = PCA(n_components=2)
@@ -154,18 +163,26 @@ def calc_pca_metrics_metabolome(dict_variance, df_data, ls_targets):
 
 def calc_pca_metrics_proteome(dict_variance, df_data, ls_targets):
     """
-    Function performing PCA on scaled proteome features
+    Function performing PCA on log-transformed and scaled proteome features
     in `df_data` and returning dataframe with PCA metrics and targets
     saved.
     """
     # get metabolies in df_data
     ls_proteome_cols = [x for x in df_data.columns
                         if x.startswith('F_proteo_')]
-    # standardise proteome
     df_proteome = df_data[ls_proteome_cols].copy(deep=True)
-    arr_prot_scaled = StandardScaler().fit_transform(df_proteome)
-    df_prot_scaled = pd.DataFrame(arr_prot_scaled, columns=df_proteome.columns,
-                                  index=df_proteome.index)
+
+    # apply log transformation on proteome
+    transformer = FunctionTransformer(np.log1p, validate=True)
+    arr_prot_log = transformer.transform(df_proteome)
+
+    df_prot_log = pd.DataFrame(arr_prot_log,
+                               columns=df_proteome.columns,
+                               index=df_proteome.index)
+    # standardise proteome
+    arr_prot_scaled = StandardScaler().fit_transform(df_prot_log)
+    df_prot_scaled = pd.DataFrame(arr_prot_scaled, columns=df_prot_log.columns,
+                                  index=df_prot_log.index)
 
     # perform PCA on scaled proteome
     pca_2d_prot = PCA(n_components=2)
