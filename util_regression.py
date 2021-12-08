@@ -74,7 +74,7 @@ def train_regressors(df_data4regr, ls_targets, ls_features,
 def get_regr_accuracy_results(str_target_descr, ls_targets,
                               md_targets, rf_results, output_dir):
     """
-    Function extracting accuracy results for 
+    Function extracting accuracy results for
     regression models saved in rf_results
     """
 
@@ -118,18 +118,18 @@ def _mod_regplot_from_dataframe(x, y, plot_style="whitegrid", arb=True,
     return reg
 
 
-def plot_regr_scatterplots_top25targets(accuracy_results, rf_results,
+def plot_regr_scatterplots_top20targets(accuracy_results, rf_results,
                                         md_targets, str_target_descr,
                                         output_dir):
     """
-    Function plotting regression scatterplots for the top 25 most
+    Function plotting regression scatterplots for the top 20 most
     accurately predicted targets.
     """
 
-    fig, axes = plt.subplots(5, 5, figsize=(16, 10))
+    fig, axes = plt.subplots(5, 4, figsize=(15, 10))
     n = 0
 
-    for ax1, target in zip(axes.flatten(), accuracy_results.index[:25]):
+    for ax1, target in zip(axes.flatten(), accuracy_results.index[:20]):
         n += 1
         acc = pd.to_numeric(rf_results[target].predictions.view(pd.Series))
         acc, exp = acc.align(md_targets.get_column(
@@ -137,11 +137,11 @@ def plot_regr_scatterplots_top25targets(accuracy_results, rf_results,
         fig = _mod_regplot_from_dataframe(exp, acc, ax=ax1)
         ax1.title.set_text(target.capitalize())
         ax1.title.set_fontsize(10)
-        if n > 20:
+        if n > 16:
             ax1.set_xlabel('True Value')
         else:
             ax1.set_xlabel('')
-        if n == 11:
+        if n == 9:
             ax1.set_ylabel('Predicted Value')
         else:
             ax1.set_ylabel('')
@@ -155,18 +155,18 @@ def plot_regr_scatterplots_top25targets(accuracy_results, rf_results,
     print('Scatterplots saved in: {}'.format(path2save))
 
 
-def plot_regr_top25_features(accuracy_results, rf_results, taxa,
+def plot_regr_top20_features(accuracy_results, rf_results, taxa,
                              str_target_descr, output_dir):
     """
-    Function plotting top 25 features for the top 25 most
+    Function plotting top 15 features for the top 20 most
     accurately predicted targets in accuracy_results
     """
 
-    fig, axes = plt.subplots(5, 5, figsize=(20, 10))
+    fig, axes = plt.subplots(5, 4, figsize=(15, 10))  # used to be 15, 10 
     n = 0
-    for ax1, target in zip(axes.flatten(), accuracy_results.index[:25]):
+    for ax1, target in zip(axes.flatten(), accuracy_results.index[:20]):
         n += 1
-        imp = rf_results[target].feature_importance.view(pd.DataFrame)[:25]
+        imp = rf_results[target].feature_importance.view(pd.DataFrame)[:15]
         imp['Importance'] = pd.to_numeric(imp['importance'])
         imp = imp.sort_values('Importance', ascending=True)
 
@@ -183,8 +183,8 @@ def plot_regr_top25_features(accuracy_results, rf_results, taxa,
 
         ax1.title.set_text(target.capitalize())
         ax1.title.set_fontsize(10)
-        plt.setp(ax1.get_yticklabels(), Fontsize=5)
-        if n > 20:
+        plt.setp(ax1.get_yticklabels(), Fontsize=6)
+        if n > 16:
             ax1.set_xlabel('Mean Importance')
         # color labels if microbial
         for ytick in ax1.get_yticklabels():
@@ -252,17 +252,17 @@ def train_n_eval_regressors(ls_targets, str_target_desc, transform_target2log,
                                                      md_targets,
                                                      rf_res,
                                                      output_dir)
-        # ! Eval2: top25 targets scatterplot
-        print('\nPlotting scatterplot for top25 targets...')
-        plot_regr_scatterplots_top25targets(accuracy_results,
+        # ! Eval2: top20 targets scatterplot
+        print('\nPlotting scatterplot for top20 targets...')
+        plot_regr_scatterplots_top20targets(accuracy_results,
                                             rf_res,
                                             md_targets,
                                             str_target_desc,
                                             output_dir)
 
-        # ! Eval3: top25 features of top25 targets
-        print('\nPlotting top25 features of top25 predicted targets...')
-        plot_regr_top25_features(accuracy_results,
+        # ! Eval3: top15 features of top20 targets
+        print('\nPlotting top15 features of top20 predicted targets...')
+        plot_regr_top20_features(accuracy_results,
                                  rf_res,
                                  taxa,
                                  str_target_desc,
