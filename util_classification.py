@@ -453,6 +453,8 @@ def train_n_eval_classifier(target2predict, ls_features, df_data, taxa,
         res_combined=res_combined,
         seed=seed
     )
+    df_omics_metrics[['Accuracy', 'SD']].to_csv(os.path.join(
+            output_dir, '{}-omics-metrics.csv'.format(target2predict)))
 
     # predictive accuracy and AUCs of individual vs. combined omics datasets
     sample_count = res_combined.predictions.view(pd.Series).shape[0]
