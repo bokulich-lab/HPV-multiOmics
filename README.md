@@ -1,6 +1,6 @@
 # Multi-Omics Predictive Modelling of Cervicovaginal Microenvironment
 
-This repository accompanies the publication: "Multi-omics data integration reveals metabolome as the top predictor of the cervicovaginal microenvironment". It includes all published analyses, namely the data analysis and modelling in notebook `a-modelling-HPV.ipynb` and the analysis of the interaction of microbiome and metabolome in the notebook `b-mmvec-HPV.ipynb`.
+This repository accompanies the preprint: "Integration of multi-omics data improves prediction of cervicovaginal microenvironment in cervical cancer" (citation below). It includes all published analyses, namely the data analysis and modelling in notebook `a-modelling-HPV.ipynb` and the analysis of the interaction of microbiome and metabolome in the notebook `b-mmvec-HPV.ipynb`.
 
 To reproduce the published results please follow the below setup instructions (they are unique for each of the two notebooks).
 
@@ -53,3 +53,10 @@ conda install -c conda-forge --file requirements-mmvec.txt
 ## Contact
 
 In case of questions or comments feel free to raise an issue in this repository. 
+
+
+## Citation
+
+If you use code, data, or ideas from this repository, please cite:
+
+Bokulich NA, Łaniewski P, Chase DM, Caporaso JG, Herbst-Kralovetz MM. 2020. Integration of multi-omics data improves prediction of cervicovaginal microenvironment in cervical cancer. medRxiv 2020.08.27.20183426; doi: https://doi.org/10.1101/2020.08.27.20183426 
