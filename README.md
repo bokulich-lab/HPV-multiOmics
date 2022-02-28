@@ -59,4 +59,4 @@ In case of questions or comments feel free to raise an issue in this repository.
 
 If you use code, data, or ideas from this repository, please cite:
 
-Bokulich NA, Łaniewski P, Chase DM, Caporaso JG, Herbst-Kralovetz MM. 2020. Integration of multi-omics data improves prediction of cervicovaginal microenvironment in cervical cancer. medRxiv 2020.08.27.20183426; doi: https://doi.org/10.1101/2020.08.27.20183426 
+Bokulich NA, Łaniewski P, Adamov A, Chase DM, Caporaso JG, Herbst-Kralovetz MM (2022) Multi-omics data integration reveals metabolome as the top predictor of the cervicovaginal microenvironment. PLoS Comput Biol 18(2): e1009876. https://doi.org/10.1371/journal.pcbi.1009876
